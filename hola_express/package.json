@@ -1,0 +1,15 @@
+{
+  "name": "hola_express",
+  "version": "0.0.1",
+  "description": "empezando con express",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "zoilo",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.15.2",
+    "pug": "^2.0.0-rc.1"
+  }
+}

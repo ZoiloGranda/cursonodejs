@@ -1,0 +1,30 @@
+//el codigo de pug se ejecuta en el servidor, no en el navegador
+html
+  head
+    title Mi primera pagina con express
+  body 
+    //!= quiere decir que va a ejecutar codigo javascript
+    // aqui carga una variable hola desde el archivo que llama la vista (app.js)
+    // si se usa != las etiquetas html se procesan y se imprimen procesadas
+    h1!="<h1>"+hola+"<h1>"
+    //para ejecutar codigo de javascript se usa un guion al principio de la linea - 
+    //el - no imprime el codigo en la vista
+    - var arreglo= [1,2,3,4,5];
+    - for (var i = arreglo.length - 1; i >= 0; i--)
+      //el = tambien ejecuta codigo de javascript e imprime el resultado en la vista
+      p=arreglo[i]
+      //tambien con el #{} se puede ejecutar codigo javascript
+      p Hola #{arreglo[i]}
+      //el . es para usar etiquetas dentro de etiquetas
+      p.
+        Hola haz click en #[a(href="codigofacilito.com") este link]
+      //para colocar un ciclo each no hace falta agregar los caracteres para usar codigo de js
+      each item in arreglo
+        p=item+"each"
+      //tambien se puede hacer un case
+      each item in arreglo
+        case item
+          when 1
+            p el item es 1
+          default
+            p el item no es el 1

@@ -1,0 +1,21 @@
+extends ../layout.pug
+block contenido
+	div(id="imagenes")
+		for imagen in imagenes
+			div(class="img-container")
+				a(href="/app/imagenes/"+imagen._id)
+					h2=imagen.title
+				img(src="/public/imagenes/"+imagen._id+"."+imagen.extension, class="main-image")
+				if (typeof imagen.creator !='undefined')
+						p Por #{imagen.creator.email}	
+	//- en este archivo hay dos template engines al mismo tiempo, pug de aqui para arriba
+	//- y handlebars de aqui para abajo
+	//- el type del script es asi porque cuando el navegador encuentra un script de un tipo no conocido, no lo carga
+	//- esto solamente se va a cargar cuando se suba una nueva imagen, y se muestra a los usuarios que esten en la ruta /app
+	//- handlebars tiene acceso directo a la variable data que se le pasa desde el archivo client.js, donde se configura el socket
+	script(id="image-template" type="text/x-handlebars-template")
+		div(class="img-container")
+			a(href="/app/imagenes/{{id}}")
+				h2 {{title}}
+				img(src="/public/imagenes/{{id}}.{{extension}}", class="main-image")
+	script(src="/public/js/client.js")

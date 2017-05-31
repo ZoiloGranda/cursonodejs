@@ -1,0 +1,616 @@
+//primero hay que iniciar el servidor con el comando mongod desde la consola, despues para iniciar el cliente de mongodb se usa el comando mongo desde otra consola 
+zoilo@zoilo-VIT-P2412:~$ mongod
+zoilo@zoilo-VIT-P2412:~$ mongo
+
+ // mostrar bases de datos
+> show databases;
+admin    (empty)
+local    0.078GB
+primera  0.078GB
+
+// comando para decir que se va a usar la base de datos llamada codigo_facilito, se crea cuando se manda a guardar algo
+> use codigo_facilito 
+switched to db codigo_facilito
+
+// muestra la base de datos que se esta usando
+> db 
+codigo_facilito
+
+//crea un documento denominado usuario con esos campos
+> usuario={nombre:"test", edad:20} 
+{ "nombre" : "test", "edad" : 20 }
+
+//insertar el documento usuario, en la coleccion usuarios de la base de datos codigo_facilito
+> db.usuarios.insert(usuario) 
+WriteResult({ "nInserted" : 1 })
+
+//muestra las colecciones de documentos que hay en la db
+> show collections; 
+system.indexes
+usuarios
+
+//muestra la coleccion de documentos usuarios
+//el metodo find hace un query a la base de datos
+> db.usuarios.find(); 
+{ "_id" : ObjectId("58ed60bb1427f9427ccb51ac"), "nombre" : "test", "edad" : 20 }
+
+// guarda en la variable test el metodo para mostrar un solo documento de la coleccion
+> var test= db.usuarios.findOne() 
+> test
+{
+	"_id" : ObjectId("58ed60bb1427f9427ccb51ac"),
+	"nombre" : "test",
+	"edad" : 20
+}
+
+// guardar en la variable test_dos el metodo find de un documento con el campo nombre con valor otro
+> var test_dos=db.usuarios.find({nombre:"otro"})
+> test_dos
+{ "_id" : ObjectId("58ed62ea1427f9427ccb51ad"), "nombre" : "otro" }
+
+// guardar en la variable zoilo_27 el metodo para llamar al documento con nombre zoilo y edad 27
+> var zoilo_27 = db.usuarios.find({nombre:"zoilo", edad:27})
+> zoilo_27
+{ "_id" : ObjectId("58ed6d3a1427f9427ccb51ae"), "nombre" : "zoilo", "edad" : 27 }
+
+//buscar en la coleccion usuarios los que tengan edad distinta de 20, $ne quiere decir not equal
+> db.usuarios.find({edad:{$ne:20}});
+{ "_id" : ObjectId("58ed62ea1427f9427ccb51ad"), "nombre" : "otro" }
+{ "_id" : ObjectId("58ed6d3a1427f9427ccb51ae"), "nombre" : "zoilo", "edad" : 27 }
+{ "_id" : ObjectId("58ed6d3e1427f9427ccb51af"), "nombre" : "zoilo", "edad" : 26 }
+
+//asi se crea un documento denominado uno, y otro documento denominado dos
+> uno ={ nombre: "test uno"}
+{ "nombre" : "test uno" }
+> dos = {nombre:"test dos"}
+{ "nombre" : "test dos" }
+
+// al metodo insert, se le puede pasar un arreglo con los nombres de los documentos, para agregarlos a la coleccion
+> db.usuarios.insert([uno, dos])
+BulkWriteResult({
+	"writeErrors" : [ ],
+	"writeConcernErrors" : [ ],
+	"nInserted" : 2,
+	"nUpserted" : 0,
+	"nMatched" : 0,
+	"nModified" : 0,
+	"nRemoved" : 0,
+	"upserted" : [ ]
+})
+
+// buscar un documento por id y almacenarlo en la variable test
+> var test = db.usuarios.findOne({ "_id" : ObjectId("58eeb758f278349cb616c2f1")})
+> test
+{ "_id" : ObjectId("58eeb758f278349cb616c2f1"), "nombre" : "test uno" }
+
+//cuando se guarda el metodo en la variable, se puede acceder directamente a sus propiedades como un objeto de js
+> test.nombre
+test uno
+
+//y tambien se le pueden cambiar sus valores como a los objetos de js
+> test.nombre="otro nombre"
+otro nombre
+
+//y se le pueden agregar nuevas propiedades
+> test.edad=22
+22
+
+//hay que ejecutar el metodo save para guardar el documento modificado en la base de datos
+//el metodo save guarda en el mismo documento si ya existe, si no existe crea un nuevo documento
+> db.usuarios.save(test)
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+
+//update es otro metodo para guardar documentos en la coleccion
+//el primer parametro que recibe es una propiedad del documento que se quiere modificar, en este caso va a modificar el que tenga de nombre "otro nombre"
+//el segundo parametro es el documento que se va a usar para actualizar
+> db.usuarios.update({nombre: "otro nombre"}, test)
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+
+//con $set se modifica el campo que se le pasa como parametro
+//con este metodo solo me modifica un documento que tenga como nombre "test"
+> db.usuarios.update({nombre:"test"},{$set:{nombre:"jugo"}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+
+// al pasarle el parametro {multi:true}, el metodo set va a modificar todos los documentos que tengan como nombre "zoilo"
+> db.usuarios.update({nombre:"zoilo"},{$set:{nombre:"matias"}}, {multi:true})
+WriteResult({ "nMatched" : 2, "nUpserted" : 0, "nModified" : 2 })
+
+//con el metodo set tambien se pueden agregar nuevos campos, aqui se agrega el campo ejemplo con valor 100
+> db.usuarios.update({nombre:"matias"},{$set:{nombre:"matias", ejemplo:100}}, {multi:true})
+WriteResult({ "nMatched" : 2, "nUpserted" : 0, "nModified" : 2 })
+
+//si no se le pasa la condicion de cual documento va a modificar, los modifica todos
+> db.usuarios.update({},{$set:{ejemplo:10}}, {multi:true})
+WriteResult({ "nMatched" : 6, "nUpserted" : 0, "nModified" : 6 })
+
+// con el metodo $unset se elimina un campo de los documentos, como no tiene condicion, le elimina el campo ejemplo a todos los documentos
+> db.usuarios.update({},{$unset:{ejemplo:1}}, {multi:true})
+WriteResult({ "nMatched" : 6, "nUpserted" : 0, "nModified" : 6 })
+
+//el metodo remove es para eliminar un documento que coincida con el parametro que se le pasa
+> db.usuarios.remove({nombre:"test dos"})
+WriteResult({ "nRemoved" : 1 })
+
+//si no se le pasa una condicion de busqueda, elimina todos los documentos que tengan ese valor(nombre: zoilo)
+> db.usuarios.remove({nombre:"zoilo"})
+WriteResult({ "nRemoved" : 5 })
+
+//y si se le pasasin ningun parametro, borra todos los documentos de la coleccion
+> db.usuarios.remove({})
+WriteResult({ "nRemoved" : 1 })
+
+// para eliminar una coleccion completa se usa el metodo drop
+> db.usaurios.drop()
+true
+
+//con dropDatabase, se eliminar la base de datos en la que se está trabajando
+> db.dropDatabase()
+{ "dropped" : "codigo_facilito", "ok" : 1 }
+
+//el metodo find se puede filtrar para que en vez de traerse todos los datos de los documentos, solo se traiga los campos especificados con 1
+//en este caso se trae el campo nombre de todos los documentos de la coleccion
+> db.libros.find({},{nombre:1})
+
+//por defecto mongo se trae la id, si no se quiere mostrar se usa _id:0
+> db.libros.find({},{nombre:1,_id:0})
+
+//hay 4 operadores en mongo db de comparacion $gt $gte $lt $lte, son mayor que, mayor o igual que, menor que y menor o igual que
+//consulta los libros con fecha de primera edicion mayor a 1949, y solo muestra los nombres
+> db.libros.find({primera_edicion:{$gt:1949}},{nombre:1,_id:0})
+
+// al colocar dos condiciones, una mayor que y otra menor que, se hace una consulta de los libros que esten dentro de ese rango
+//a eso se le llama between
+> db.libros.find({primera_edicion:{$gt:1949, $lte:1960}},{nombre:1,_id:0})
+
+//igual que la anterior, pero con otra condicion, que el numero sea mayor a 100
+> db.libros.find({primera_edicion:{$gt:1949, $lte:1960},numero:{$gt:100}},{nombre:1,_id:0})
+
+//crea un ciclo y agrega un nuevo documento en cada iteracion
+> for(i=0;i<100;i++){db.libros.insert({valor:i})}
+WriteResult({ "nInserted" : 1 })
+
+//esto se llama un cursor,  solo se pueden ejecutar una vez, para volverlos a usar hay que volverlos a declarar
+//en este caso se guarda en cursor el metodo para consultar todos lo documentos de la coleccion libros
+//y despues se le pasa el metodo forEach que imprime el valor de cada documento, cada documento se va iterando en la variable d
+> var cursor = db.libros.find()
+> cursor.forEach(function(d){print(d.valor)})
+
+//se usa el cursor para colocarle como valor =100 a todos los documentos, y despues guardarlo en la coleccion
+> var cursor = db.libros.find()
+> cursor.forEach(function(d){d.valor=100;db.libros.save(d);})
+
+//el para contar el numero de documentos de una coleccion
+> db.manzanas.find().count()
+10
+
+//el metodo sort es para ordenar la consulta, se le pasa el campo  con el cual se va a ordenar, 1 es ascedente, -1 es descendente
+//en este casi organiza de forma descedente la coleccion manzanas segun su valor
+> db.manzanas.find().sort({valor:-1})
+
+//el metodo limit es para limitar la cantidad de documentos que retorna la consulta
+> db.manzanas.find().sort({valor:-1}).limit(3)
+
+//con skip se omiten los primeros documentos retornados
+> db.manzanas.find().sort({valor:-1}).skip(1).limit(3)
+
+// como count es un metodo directo de find, se utiliza size para saber cuando documentos retorna una consulta que ya tenga varios metodos concatenados
+> db.manzanas.find().sort({valor:-1}).skip(2).size()
+8
+
+//se pueden guardar arreglos en un campo de un documento
+> var arreglo =[1,2,3]
+> var usuario={nombre:"test", valores:arreglo}
+> db.usuarios.insert(usuario)
+WriteResult({ "nInserted" : 1 })
+> db.usuarios.find()
+{ "_id" : ObjectId("58f152fbbed71ebc89460924"), "nombre" : "test", "valores" : [ 1, 2, 3 ] }
+
+//con $addToSet se le agregan nuevo valores a un arreglo, no se pueden agregar valores repetidos
+> db.usuarios.update({},{$addToSet:{valores:4}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.usuarios.find()
+{ "_id" : ObjectId("58f152fbbed71ebc89460924"), "nombre" : "test", "valores" : [ 1, 2, 3, 4 ] }
+
+//con $push si se pueden agregar un elemento repetido al arreglo
+> db.usuarios.update({},{$push:{valores:4}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.usuarios.find()
+{ "_id" : ObjectId("58f152fbbed71ebc89460924"), "nombre" : "test", "valores" : [ 1, 2, 3, 4, 4 ] }
+
+//$each siver para agregar cada valor que se le pasa como arreglo a los documentos
+> db.usuarios.update({},{$push:{valores:{$each:[5,6]}}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.usuarios.find()
+{ "_id" : ObjectId("58f152fbbed71ebc89460924"), "nombre" : "test", "valores" : [ 1, 2, 3, 4, 4, 5, 6 ] }
+
+//con $position se agregan los nuevos elementos en la posicion que se pasa como parametro
+//$position no funciona con addToSet, solo con push
+> db.usuarios.update({},{$push:{valores:{$each:[100,101],$position:4}}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.usuarios.find()
+{ "_id" : ObjectId("58f152fbbed71ebc89460924"), "nombre" : "test", "valores" : [ 1, 2, 3, 4, 100, 101, 4, 5, 6, 7, 100, 101 ] }
+
+//si se le agrega $sort:1, guarda los nuevos elementos en orden ascendente dentro del arreglo (si fuera -1 se guardan en orden descendente)
+> db.usuarios.update({},{$push:{valores:{$each:[92,97],$sort:1}}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.usuarios.find()
+{ "_id" : ObjectId("58f152fbbed71ebc89460924"), "nombre" : "test", "valores" : [ 1, 2, 3, 4, 4, 5, 6, 7, 7, 92, 95, 97, 100, 100, 101, 101 ] }
+
+// si se le pasa el each vacio, y con el metodo sort, se ordena el arreglo
+> db.usuarios.update({},{$push:{valores:{$each:[],$sort:1}}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.usuarios.find()
+{ "_id" : ObjectId("58f152fbbed71ebc89460924"), "nombre" : "test", "valores" : [ 1, 2, 3, 4, 4, 5, 6, 7, 7, 28, 45, 92, 95, 97, 100, 100, 101, 101 ] }
+
+//el metodo pull es para eliminar un elemento de un arreglo, si hay el elemento esta repetido, los elimina todos
+> db.usuarios.update({},{$pull:{valores:101}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+
+//eliminar de un arreglo los elementos mayores o iguales a 80
+> db.usuarios.update({},{$pull:{valores:{$gte:80}}}) 
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+
+//con el metodo pullAll, se pueden eleminar distintos elementos de un arreglo
+> db.usuarios.update({},{$pullAll:{valores:[7,4]}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+
+//con el metodo slice se consulta un arreglo, hasta la posicion que se indica en el slice
+> db.usuarios.find({},{_id:false,valores:{$slice:3}})
+{ "nombre" : "test", "valores" : [ 1, 2, 3 ] }
+
+//si se usa numero negativo consulta el arreglo desde el final
+> db.usuarios.find({},{_id:false,valores:{$slice:-2}})
+{ "nombre" : "test", "valores" : [ 28, 45 ] }
+
+//si se le pasa como argumento a slice un arreglo, el primer valor es la posicion donde va a iniciar la consultar, y el segundo valor la cantidad de elementos
+//que va a retornar a partir de ahi.
+> db.usuarios.find({},{_id:false,valores:{$slice:[3,4]}})
+{ "nombre" : "test", "valores" : [ 5, 6, 28, 45 ] }
+
+//el primer parametro de find, es un filtro o una condicional, al pasarle {valores:{$in:[1]}}, se le dice que solo consulte los documentos que tenga el
+elemento 1 en el campo valores, y de esos documentos hace la consulta
+> db.usuarios.find({valores:{$in:[1]}},{_id:false,nombre:false,valores:{$slice:[3,4]}})
+{ "valores" : [ 5, 6, 28, 45 ] }
+
+//si se usa el metodo $nin (not in) en el filtro, quiere decir que busque los documentos que no tengan ese valor
+> db.usuarios.find({valores:{$nin:[80]}},{_id:false,nombre:false,valores:{$slice:[3,4]}})
+{ "valores" : [ 5, 6, 28, 45 ] }
+
+//group es un pipeline de agregate, que sirve para agrupar los documentos por un valor, asi si hay varios documentos con un mismo valor en el campo
+//item, los muestra como uno solo
+//al group se le pasa como primer parametro el campo por el cual se va a agrupar, hay que ponerle _id para decirle que ese va a ser el index para la consulta, no
+//tiene nada que ver con el _id de los campos en la base de datos
+> db.items.aggregate([{$group:{_id:"$item"}}])
+{ "_id" : "botellon" }
+{ "_id" : "latas" }
+{ "_id" : "caja" }
+
+//$group acepta como parametro un campo en el cual se suma la cantidad de documentos repetidos con un mismo valor
+> db.items.aggregate([{$group:{_id:"$item","repetidos":{$sum:1}}}])
+{ "_id" : "botellon", "repetidos" : 1 }
+{ "_id" : "latas", "repetidos" : 1 }
+{ "_id" : "caja", "repetidos" : 2 }
+
+//se le pueden pasar mas parametros al group, aqui se le dice que sume los valores que hay en el campo valor para cada elemento repetidoQQQW3
+> db.items.aggregate([{$group:{_id:"$item","repetidos":{$sum:1},"suma":{$sum: "$valor"}}}])
+{ "_id" : "botellon", "repetidos" : 1, "suma" : 50 }
+{ "_id" : "latas", "repetidos" : 1, "suma" : 450 }
+{ "_id" : "caja", "repetidos" : 2, "suma" : 150 }
+
+//con $avg se saca el promedio de los campos que se le pasa como parametro
+> db.items.aggregate([{$group:{_id:"$item","promedio":{$avg:"$valor"}}}])
+{ "_id" : "botellon", "promedio" : 50 }
+{ "_id" : "latas", "promedio" : 450 }
+{ "_id" : "caja", "promedio" : 75 }
+
+//se pueden usar expresiones regulares en las queries a la base de datos, las expresiones regulares van dentro de /  /
+// aqui busca los corros que tengan @
+> db.correos.find({correo:/@/})
+{ "_id" : ObjectId("58f7bd27ce3a23e21d66b81e"), "correo" : "zgranda@gmail.com" }
+{ "_id" : ObjectId("58f7bd6fce3a23e21d66b81f"), "correo" : "arepa@hotmail.com" }
+{ "_id" : ObjectId("58f7bd6fce3a23e21d66b820"), "correo" : "masterarepa@gmail.com" }
+
+//buscar en la coleccion los correos que tengan @asd en el campo correo (no retorna nada porque ninguno lo tiene)
+> db.correos.find({correo:/@asd/})
+> 
+
+//con el $ al final de un string, se hace un query que retorna los correos que terminen con .com
+> db.correos.find({correo:/.com$/})
+{ "_id" : ObjectId("58f7bd27ce3a23e21d66b81e"), "correo" : "zgranda@gmail.com" }
+{ "_id" : ObjectId("58f7bd6fce3a23e21d66b81f"), "correo" : "arepa@hotmail.com" }
+{ "_id" : ObjectId("58f7bd6fce3a23e21d66b820"), "correo" : "masterarepa@gmail.com" }
+
+//tambien se puede colocar  asi, que quiere decir que en cualquier lado tengan la string .com
+> db.correos.find({correo:/.com/})
+{ "_id" : ObjectId("58f7bd27ce3a23e21d66b81e"), "correo" : "zgranda@gmail.com" }
+{ "_id" : ObjectId("58f7bd6fce3a23e21d66b81f"), "correo" : "arepa@hotmail.com" }
+{ "_id" : ObjectId("58f7bd6fce3a23e21d66b820"), "correo" : "masterarepa@gmail.com" }
+
+//con ^ se busca los correos que empiecen con la string zgr 
+> db.correos.find({correo:/^zgr/})
+{ "_id" : ObjectId("58f7bd27ce3a23e21d66b81e"), "correo" : "zgranda@gmail.com" }
+> 
+
+//se crean dos documentos alumno y matricula, luego se agrega matricula a alumno, esto se llama documentos embebidos o anidados
+> alumno
+{
+	"nombre" : "zoilo",
+	"apellido" : "granda",
+	"edad" : 27,
+	"sexo" : "masculino"
+}
+> matricula
+{ "numero" : 12345, "año" : 2016, "renovada" : false }
+> alumno.matricula=matricula
+{ "numero" : 12345, "año" : 2016, "renovada" : false }
+> alumno
+{
+	"nombre" : "zoilo",
+	"apellido" : "granda",
+	"edad" : 27,
+	"sexo" : "masculino",
+	"matricula" : {
+		"numero" : 12345,
+		"año" : 2016,
+		"renovada" : false
+	}
+}
+
+//se puede hacer query directamente sobre un documento anidado dentro de otro documento
+> db.alumnos.find({"matricula.numero":12345})
+{ "_id" : ObjectId("58f7c6cece3a23e21d66b821"), "nombre" : "zoilo", "apellido" : "granda", "edad" : 27, "sexo" : "masculino", "matricula" : { "numero" : 12345, "año" : 2016, "renovada" : false } }
+
+//tambien se pueden modificar directamente los atributos del documento anidado
+> db.alumnos.update({},{$set:{"matricula.año":2017}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+
+//remueve los documentos que tenga matricula.renovada: false
+> db.alumnos.remove({"matricula.renovada":false})
+WriteResult({ "nRemoved" : 1 })
+
+//con el metodo pretty se muestran los resultados acomodados
+> db.trabajadores.find().pretty()
+{
+	"_id" : ObjectId("58f7d972ce3a23e21d66b823"),
+	"nombre" : "Zoilo",
+	"edad" : 27,
+	"direcciones" : [
+		{
+			"direccion" : "direccion una"
+		},
+		{
+			"direccion" : "direccion dos"
+		},
+		{
+			"direccion" : "direccion tres"
+		}
+	]
+}
+
+//$elemMatch sirve para buscar los documentos que cumplan con todas las condiciones que se le pasa
+//elemMatch se usa cuando se van a usar varios parametros de busqueda
+> db.trabajadores.find({"direcciones":{$elemMatch:{"direccion":"direccion una","direccion":"direccion dos"}}})
+{ "_id" : ObjectId("58f7d972ce3a23e21d66b823"), "cedula" : [ { "numero" : 19251124 }, { "añoexp" : 2016 }, { "añovenc" : 2020 } ], "nombre" : "Zoilo", "edad" : 27, "direcciones" : [ { "direccion" : "direccion una" }, { "direccion" : "direccion dos" }, { "direccion" : "direccion tres" } ] }
+
+//consulta los documentos que tengan "direccion una" y "direccion dos" como valores de direccion, y en el retorno solo muestra una direccion
+> db.trabajadores.find({"direcciones":{$elemMatch:{"direccion":"direccion una","direccion":"direccion dos"}}},{_id:false,direcciones:{$elemMatch:{direccion:"direccion una"}}}).pretty()
+{ "direcciones" : [ { "direccion" : "direccion una" } ] }
+
+//consultar un documento con el valor 123 en el elemento codigo postal del arreglo direcciones, mostrando solamente ese campo
+> db.trabajadores.find({"direcciones.codigo postal":123}).pretty() 
+{
+	"_id" : ObjectId("58f7d972ce3a23e21d66b823"),
+	"direcciones" : [
+		{
+			"direccion uno" : "coro",
+			"calle" : "tus nalgas",
+			"codigo postal" : 123
+		},
+		{
+			"direccion dos" : "punto fijo",
+			"calle" : "por ahi",
+			"codigo postal" : 321
+		},
+		{
+			"direccion tres" : "la vela",
+			"calle" : "mas allaita",
+			"codigo postal" : 456
+		}
+	]
+}
+
+> db.trabajadores.find({"direcciones.codigo postal":123},{_id:false,direcciones:{$elemMatch:{"codigo postal":123}}})
+{ "direcciones" : [ { "direccion uno" : "coro", "calle" : "tus nalgas", "codigo postal" : 123 } ] }
+
+//el mismo resultado se puede obtener si se usa el operador $, que poryecta el primer subdocumento que concuerda con la consulta, en este caso muestra lo mismo
+//que requiere la consulta
+> db.trabajadores.find({"direcciones.codigo postal":123},{_id:false,"direcciones.$":true})
+{ "direcciones" : [ { "direccion uno" : "coro", "calle" : "tus nalgas", "codigo postal" : 123 } ] }
+
+//modificar el contenido completo de un subdocumento
+// el operado $ cuando se usa en update, quiere decir que se va a modificar el documento que esta filtrado en la consulta
+{ "direcciones" : [ { "direccion uno" : "coro", "calle" : "tus nalgas", "codigo postal" : 123 } ] }
+> db.trabajadores.update({"direcciones.codigo postal":123},{$set:{"direcciones.$":{numero:999}}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.trabajadores.find().pretty()
+{
+	"_id" : ObjectId("58f7d972ce3a23e21d66b823"),
+	"direcciones" : [
+		{
+			"numero" : 999
+		},
+		{
+			"direccion dos" : "punto fijo",
+			"calle" : "por ahi",
+			"codigo postal" : 321
+		},
+		{
+			"direccion tres" : "la vela",
+			"calle" : "mas allaita",
+			"codigo postal" : 456
+		}
+	]
+}
+
+//para modificar un solo campo de un subdocumento
+//el operador $ retorna el elemento de la consulta sobre ese elemento busca el campo uso, si existe lo modifica, si no existe lo crea
+> db.trabajadores.find().pretty()
+{
+	"_id" : ObjectId("58f7d972ce3a23e21d66b823"),
+	"direcciones" : [
+		{
+			"numero" : 999
+		},
+		{
+			"direccion dos" : "punto fijo",
+			"calle" : "por ahi",
+			"codigo postal" : 321
+		},
+		{
+			"direccion tres" : "la vela",
+			"calle" : "mas allaita",
+			"codigo postal" : 456
+		}
+	]
+}
+> db.trabajadores.update({"direcciones.codigo postal":321},{$set:{"direcciones.$.uso":"vivienda"}})
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.trabajadores.find().pretty()
+{
+	"_id" : ObjectId("58f7d972ce3a23e21d66b823"),
+	"direcciones" : [
+		{
+			"numero" : 999
+		},
+		{
+			"direccion dos" : "punto fijo",
+			"calle" : "por ahi",
+			"codigo postal" : 321,
+			"uso" : "vivienda"
+		},
+		{
+			"direccion tres" : "la vela",
+			"calle" : "mas allaita",
+			"codigo postal" : 456
+		}
+	]
+}
+
+//se pueden crear documentos con _id personalizada
+> var documento = {_id:"Nuevo Id", name:"otro"}
+> db.id_pruebas.insert(documento)
+WriteResult({ "nInserted" : 1 })
+> db.id_pruebas.find()
+{ "_id" : "Nuevo Id", "name" : "otro" }
+
+//crea un nuevo _id de ObjectId
+> new ObjectId()
+ObjectId("58fe0066b16808fbb600702d")
+
+//createcollection crea una nueva coleccion, el primer parametro que se le pasa es el nombre de la coleccion "Pruebae"
+//con validator se valida el esquema del documento, para que todos los documentos tengan esos atributos y valores
+//$and quiere decir que el documento tiene que tener obligatoriamente todos los atributos que se le pasan en el arreglo
+//$type para colocar que el atributo nombre va a ser de tipo string
+//$in es para que el valor pueda ser M o F
+//en el campo email, con regex valida que el valor tenga una @
+//$exist es booleano, si es true, tiene que haber un atributo telefono, como es false no tiene que haber un atributo telefono
+//otro.apellido es para validar un subdocumento o un arreglo dentro de otro
+//si se intentan guardar documentos que no cumplan con el modelo, va a dar error
+> db.createCollection("Pruebae",
+{
+	validator:{ $and:
+	  [
+	    {nombre: {$type: "string"}},
+	    {sexo: {$in: ["M","F"]}},
+	    {email: {$regex: /@/}},
+	    {telefono: {$exist:false}},
+	    {"otro.apellido":{$type:"string"}}
+	  ]
+
+	}
+})
+
+//el metodo explain se usa con un cursor o consulta, y sirve para mostrar informacion adicional en la consulta
+//muestra la cantidad de documentos escaneados, los milisegundos que se tardó la operacion, informacion del servidor, y otras cosas
+//el parametro executionStats no esta disponible en la version 2.6 de mongodb, es a partir de la 3.0
+db.usuarios.find({nombre:"Pearl"}).explain("executionsStats")
+{
+	"cursor" : "BasicCursor",
+	"isMultiKey" : false,
+	"n" : 1,
+	"nscannedObjects" : 1000,
+	"nscanned" : 1000,
+	"nscannedObjectsAllPlans" : 1000,
+	"nscannedAllPlans" : 1000,
+	"scanAndOrder" : false,
+	"indexOnly" : false,
+	"nYields" : 7,
+	"nChunkSkips" : 0,
+	"millis" : 1,
+	"allPlans" : [
+		{
+			"cursor" : "BasicCursor",
+			"isMultiKey" : false,
+			"n" : 1,
+			"nscannedObjects" : 1000,
+			"nscanned" : 1000,
+			"scanAndOrder" : false,
+			"indexOnly" : false,
+			"nChunkSkips" : 0
+		}
+	],
+	"server" : "zoilo-VIT-P2412:27017",
+	"filterSet" : false,
+	"stats" : {
+		"type" : "COLLSCAN",
+		"works" : 1002,
+		"yields" : 7,
+		"unyields" : 7,
+		"invalidates" : 0,
+		"advanced" : 1,
+		"needTime" : 1000,
+		"needFetch" : 0,
+		"isEOF" : 1,
+		"docsTested" : 1000,
+		"children" : [ ]
+	}
+}
+
+//se puede filtrar la salida colocando al final el atributo que se quiere acceder
+> db.usuarios.find({nombre:"Pearl"}).explain(true).millis 
+1
+
+//crea otro index para la coleccion, el index por default para cada coleccion es la _id
+//al crear un index por nombre, se aceleran las busquedas por nombbre
+//el parametro 1 quiere decir que se va a indexar de forma ascendente (ojo es indexar de forma ascendente, no va a cambiar el orden de la coleccion)
+> db.usuarios.createIndex({nombre:1})
+{
+	"createdCollectionAutomatically" : false,
+	"numIndexesBefore" : 1,
+	"numIndexesAfter" : 2,
+	"ok" : 1
+}
+
+//con mongodump se crea un respaldo de la base de datos, se guarda en una carpeta en el directorio en el que se abrió la consola
+zoilo@zoilo-VIT-P2412:~$ cd /home/zoilo/Documentos
+zoilo@zoilo-VIT-P2412:~/Documentos$ mongodump --db libros
+
+//con mongorestore se restaura  un backup de una base de datos
+// el primer parametro es el nombre de la base de datos (libros)
+//el segundo parametro es la direccion donde esta el backup
+zoilo@zoilo-VIT-P2412:~/Documentos$ mongorestore --db libros dump/libros
+
+//para crea un backup de una coleccion es asi, se le pasa el parametro --collection a mongodump
+// despues el nombre de la coleccion, despues --db para indicarle a que base de datos pertenece la coleccion
+zoilo@zoilo-VIT-P2412:~/Documentos$ mongodump --collection usuarios --db libros
+
+//para restaurar la coleccion se le pasa --collection a mongorestore
+//despues --db para decirle a cual base de datos va a restaurar la coleccion
+//y los ultimo es la direccion del archivo .bson que se crea con el respaldo
+zoilo@zoilo-VIT-P2412:~/Documentos$ mongorestore --collection usuarios --db libros dump/libros/usuarios.bson
+connected to: 127.0.0.1
+2017-04-26T12:23:18.798-0400 dump/libros/usuarios.bson
+2017-04-26T12:23:18.798-0400 	going into namespace [libros.usuarios]
+1000 objects found
+2017-04-26T12:23:18.801-0400 	Creating index: { key: { _id: 1 }, name: "_id_", ns: "libros.usuarios" }
+2017-04-26T12:23:18.809-0400 	Creating index: { key: { nombre: 1 }, name: "nombre_1", ns: "libros.usuarios" 
